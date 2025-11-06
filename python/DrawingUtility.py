@@ -100,6 +100,15 @@ class DataProcessing:
         return value*1E4
 
     @staticmethod
+    def nearestIDX(A, B):
+        idx = np.searchsorted(B, A)
+        idx = np.clip(idx, 1, len(B) -1)
+        left = B[idx-1]
+        right = B[idx]
+        idx -= (np.abs(A-left) < np.abs(A-right))
+        return idx
+
+    @staticmethod
     def drawSchubweg(ax, V, mt):
         slimit = DataProcessing.cm2um(np.sqrt(mt*V))
         ax.plot(V, slimit, 'g')
@@ -146,6 +155,27 @@ class DataProcessing:
                     break
                 Q[i] = Q[i] + (np.exp(-alpha*dt*k) * (1 - np.exp(-alpha*dt)) / (((meshd[i]+g) - k*dt)**2 + meshS[i]**2)) *\
                               ((meshd[i]+g) - k * dt) / (np.sqrt(((meshd[i]+g) - k*dt)**2 + meshS[i]**2))
+        return Q
+
+    @staticmethod
+    def SphericalRadiation_NegativeRefraction(S, d, g, alpha, N):
+        meshS, meshd = np.meshgrid(S, d)
+        Q = meshS.copy()
+        Q[:] = 0
+        dt = np.max(d)/N
+
+        # for j in range(1, div+1):
+        for i, j in enumerate(d): # Thickness Sweep
+            for k in range(1, N + 1): # Wave Propagation
+                if k*dt >= 1*j:
+                    break
+                Q_Temp = (np.exp(-alpha*dt*k) * (1 - np.exp(-alpha*dt)) / (((meshd[i]+g) - k*dt)**2 + meshS[i]**2)) *\
+                              ((meshd[i]+g) - k * dt) / (np.sqrt(((meshd[i]+g) - k*dt)**2 + meshS[i]**2))
+
+                Ltant = (j - 1/alpha + g) * meshS[i] / (meshd[i] - k*dt + g)
+                idx = DataProcessing.nearestIDX(Ltant, meshS[i])
+                Q[i] = Q[i] + np.bincount(idx, weights = Q_Temp, minlength=len(meshS[i]))
+
         return Q
 
 
