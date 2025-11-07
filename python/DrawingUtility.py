@@ -100,6 +100,12 @@ class DataProcessing:
         return value*1E4
 
     @staticmethod
+    def FourierTransform(input):
+        x = DataProcessing.__FourierTransform(input[0])
+        y = DataProcessing.__FourierTransform(input[1])
+
+
+    @staticmethod
     def nearestIDX(A, B):
         idx = np.searchsorted(B, A)
         idx = np.clip(idx, 1, len(B) -1)
@@ -178,7 +184,13 @@ class DataProcessing:
 
         return Q
 
+    @staticmethod
+    def __FourierTransform(input):
+        return np.fft.shift(np.fft.fftshift(np.fft.fft(input)))
 
+    @staticmethod
+    def __FourierTransform_x(input):
+        return np.fft.shift(np.fft.fftfreq(len(input), 1/(input[1]-input[0])))
 
 
 class MinorSymLogLocator(Locator):
