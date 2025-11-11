@@ -44,6 +44,7 @@ class DeviceModelling:
 
         UTIL.FigureConfig.FigureConfiguration(self.drawax, inputinfo, ftstyle, ftsize, tickftsize)
         UTIL.FigureConfig.forceAspect(self.drawax, inputinfo['xScale'], inputinfo['yScale'], aspect=1)
+        return self.drawax
 
     def Event_DrawClipboard(self, ax, color, legendinfo, alphavalue, marker='None', ftsize=16):
 
@@ -64,13 +65,15 @@ class DeviceModelling:
         colorstyle = mpl.colormaps[inputinfo['CMapTitleLd_0']]
         vmin, vmax = float(inputinfo['CMap Range_0']), float(inputinfo['CMap Range_1'])
 
-
-
         S = UTIL.DataProcessing.um2cm(np.arange(ax.get_xlim()[0], ax.get_xlim()[1] + SStep, SStep))
         d = UTIL.DataProcessing.um2cm(np.arange(ax.get_ylim()[0], ax.get_ylim()[1] + dStep, dStep))
         g = UTIL.DataProcessing.um2cm(gap)
 
         data = UTIL.DataProcessing.SphericalRadiation_NegativeRefraction(S, d, g, alpha, N)
+        # data = UTIL.DataProcessing.SphericalRadiation(S, d, g, alpha, N)
+
+        UTIL.DataProcessing.np2clipboard(data=data, index=d, columns=S)
+
         c = ax.imshow(data, cmap=colorstyle, alpha=0.8, origin='lower' ,
                       extent = [ax.get_xlim()[0], ax.get_xlim()[1], ax.get_ylim()[0], ax.get_ylim()[1]],
                       vmin = vmin, vmax = vmax)
@@ -83,9 +86,33 @@ class DeviceModelling:
         plt.pause(0.001)
         plt.show()
 
-        df = pd.DataFrame(data)
-        df.to_clipboard(excel=True)
+    def Event_CalculateMTF(self, inputinfo, ftsize=16):
+        ax = self.Event_NewFigure(inputinfo.copy())
 
+        data = UTIL.DataProcessing.ReadClipboard()
+        x = np.array(data.columns).astype(float)
+        y = np.array(data.index).astype(float)
+        data = UTIL.DataProcessing.df2np(data)
+        fft_data = data.copy().astype(complex)
+        fft_data[:] = 0
+
+        for k, data_now in enumerate(data):
+            fft_x, fft_data[k] = UTIL.DataProcessing.FourierTransform(np.array([x, data_now]))
+        fft_data = np.abs(fft_data)
+        UTIL.DataProcessing.np2clipboard(data=fft_data, index=y, columns=fft_x)
+
+        colorstyle = mpl.colormaps[inputinfo['CMapTitleLd_0']]
+
+        c = ax.imshow(np.abs(fft_data), cmap=colorstyle, alpha=0.8, origin='lower' ,
+                      extent = [min(fft_x), max(fft_x), ax.get_ylim()[0], ax.get_ylim()[1]],
+                      vmin = 0, vmax = 1)
+        ax.cbar = ax.get_figure().colorbar(c, ax=ax)
+        ax.cbar.set_label(label=inputinfo['CMapTitleLd_1'], size=ftsize)
+        ax.cbar.ax.tick_params(labelsize=ftsize)
+        UTIL.FigureConfig.forceAspect(ax, inputinfo['xScale'], inputinfo['yScale'], aspect=1)
+
+        plt.pause(0.001)
+        plt.show()
         asdf = 1
 
     def __main__(self):
@@ -153,15 +180,15 @@ class DeviceModelling:
                 self.DataProcessEntryAddress[key] = UI.UI_tkinter.UI_InputEntry(self.DataProcessFrame, EntryInfos[key], row=k, col=1, colspan=colspan, width=10)
 
         colspan += 1
-        ButtonInfos = ["Calculate"]
+        ButtonInfos = ["Calculate", "Calculate MTF"]
         for n, t in enumerate(ButtonInfos):
-            self.ButtonAddress[t] = UI.UI_tkinter.UI_Button(self.DataProcessFrame, t, row=LabelInfos.__len__(), col=0, colspan=colspan, width=20, height=1)
-
+            self.ButtonAddress[t] = UI.UI_tkinter.UI_Button(self.DataProcessFrame, t, row=LabelInfos.__len__() + n, col=0, colspan=colspan, width=24, height=1)
 
         ### Designate Button Callback Function
         self.ButtonAddress['ApplyInfo'].configure(command=lambda: self.Event_ApplyInfo(self.OutputPlotFrame, self.InputEntryAddress))
         self.ButtonAddress['New Figure'].configure(command=lambda: self.Event_NewFigure(self.InputInfo.copy()))
         self.ButtonAddress['Calculate'].configure(command=lambda: self.Event_Calculate(self.drawax, self.InputInfo.copy(), self.DataProcessEntryAddress))
+        self.ButtonAddress['Calculate MTF'].configure(command=lambda: self.Event_CalculateMTF(self.InputInfo.copy()))
 
 if __name__ == '__main__':
     window = Tk()

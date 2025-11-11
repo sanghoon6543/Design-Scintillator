@@ -85,7 +85,16 @@ class FigureConfig:
 class DataProcessing:
     @staticmethod
     def ReadClipboard():
-        return pd.read_clipboard(header=None)
+        return pd.read_clipboard()
+
+    @staticmethod
+    def df2np(df):
+        return np.array(df)
+
+    @staticmethod
+    def np2clipboard(data, index=None, columns=None):
+        df = pd.DataFrame(data=data, index=index, columns=columns)
+        df.to_clipboard(excel=True)
 
     @staticmethod
     def GetEntry(EntryAddress):
@@ -101,9 +110,9 @@ class DataProcessing:
 
     @staticmethod
     def FourierTransform(input):
-        x = DataProcessing.__FourierTransform(input[0])
+        x = DataProcessing.__FourierTransform_x(input[0])
         y = DataProcessing.__FourierTransform(input[1])
-
+        return x, y
 
     @staticmethod
     def nearestIDX(A, B):
@@ -186,11 +195,11 @@ class DataProcessing:
 
     @staticmethod
     def __FourierTransform(input):
-        return np.fft.shift(np.fft.fftshift(np.fft.fft(input)))
+        return np.fft.fftshift(np.fft.fft(input))
 
     @staticmethod
     def __FourierTransform_x(input):
-        return np.fft.shift(np.fft.fftfreq(len(input), 1/(input[1]-input[0])))
+        return np.fft.fftshift(np.fft.fftfreq(len(input), (input[1]-input[0])))
 
 
 class MinorSymLogLocator(Locator):
