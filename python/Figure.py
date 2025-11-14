@@ -61,20 +61,26 @@ class DeviceModelling:
         for key in dataprocessaddress:
             self.DataProcessInfo[key] = UTIL.DataProcessing.GetEntry(dataprocessaddress[key])
 
-        SStep, dStep, N, gap, alpha = float(self.DataProcessInfo['xStep']), float(self.DataProcessInfo['yStep']), int(self.DataProcessInfo['N']), float(self.DataProcessInfo['Gap']), float(self.DataProcessInfo['abscoeff'])
+        SStep, dStep, N, gap, alpha, px = float(self.DataProcessInfo['xStep']), float(self.DataProcessInfo['yStep']), \
+                                          int(self.DataProcessInfo['N']), float(self.DataProcessInfo['Gap']), \
+                                          float(self.DataProcessInfo['abscoeff']), float(self.DataProcessInfo['a'])
+
         colorstyle = mpl.colormaps[inputinfo['CMapTitleLd_0']]
         vmin, vmax = float(inputinfo['CMap Range_0']), float(inputinfo['CMap Range_1'])
 
         S = UTIL.DataProcessing.um2cm(np.arange(ax.get_xlim()[0], ax.get_xlim()[1] + SStep, SStep))
         d = UTIL.DataProcessing.um2cm(np.arange(ax.get_ylim()[0], ax.get_ylim()[1] + dStep, dStep))
         g = UTIL.DataProcessing.um2cm(gap)
+        px = UTIL.DataProcessing.um2cm(px)
 
         data = UTIL.DataProcessing.SphericalRadiation_NegativeRefraction(S, d, g, alpha, N)
         # data = UTIL.DataProcessing.SphericalRadiation(S, d, g, alpha, N)
 
-        UTIL.DataProcessing.np2clipboard(data=data, index=d, columns=S)
+        data_pixelated = UTIL.DataProcessing.pixelation(S, data, px)
 
-        c = ax.imshow(data, cmap=colorstyle, alpha=0.8, origin='lower' ,
+        UTIL.DataProcessing.np2clipboard(data=data_pixelated, index=d, columns=S)
+
+        c = ax.imshow(data_pixelated, cmap=colorstyle, alpha=0.8, origin='lower' ,
                       extent = [ax.get_xlim()[0], ax.get_xlim()[1], ax.get_ylim()[0], ax.get_ylim()[1]],
                       vmin = vmin, vmax = vmax)
 
@@ -105,7 +111,7 @@ class DeviceModelling:
 
         c = ax.imshow(np.abs(fft_data), cmap=colorstyle, alpha=0.8, origin='lower' ,
                       extent = [min(fft_x), max(fft_x), ax.get_ylim()[0], ax.get_ylim()[1]],
-                      vmin = 0, vmax = 1)
+                      vmin = 0, vmax = np.max(fft_data))
         ax.cbar = ax.get_figure().colorbar(c, ax=ax)
         ax.cbar.set_label(label=inputinfo['CMapTitleLd_1'], size=ftsize)
         ax.cbar.ax.tick_params(labelsize=ftsize)
@@ -166,13 +172,13 @@ class DeviceModelling:
 
         ### Data Processing UI
         colspan = 0
-        LabelInfos = ["x Step", "y Step", 'N', "Gap [\u03BCm]", "\u03B1 [cm\u207b\u00B9]"]
+        LabelInfos = ["x Step", "y Step", 'N', "Gap [\u03BCm]", "\u03B1 [cm\u207b\u00B9]", "Pixel Pitch [\u03BCm]"]
 
         colspan += 1
         for n, t in enumerate(LabelInfos):
             UI.UI_tkinter.UI_Labels(self.DataProcessFrame, t=t, row=n)
 
-        EntryInfos = {'xStep': 1, 'yStep': 1, 'N': 1000, 'Gap': 20, 'abscoeff': 476}
+        EntryInfos = {'xStep': 1, 'yStep': 1, 'N': 1000, 'Gap': 20, 'abscoeff': 476, 'a': 200}
 
         self.DataProcessEntryAddress = {}
 

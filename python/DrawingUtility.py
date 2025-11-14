@@ -109,6 +109,35 @@ class DataProcessing:
         return value*1E4
 
     @staticmethod
+    def pixelation(S, f, px):
+
+        f_pixelated = f.copy()
+        f_pixelated[:] = 0
+        N_Neg = DataProcessing.__findN(S.min(), px)
+        N_Pos = DataProcessing.__findN(S.max(), px)
+        N_Neg_End = DataProcessing.__findNend(S.min(), px)
+        N_Pos_End = DataProcessing.__findNend(S.max(), px)
+
+        nPx = int(px / np.round(np.abs(S[0] - S[1]), 10))
+
+        f_left, data = DataProcessing.__Truncation(f, nPx, N_Neg, N_Neg_End, 'left')
+        f_right, data = DataProcessing.__Truncation(data, nPx, N_Pos, N_Pos_End, 'right')
+
+        if data.shape[-1] % 2 == 1:
+            data = np.delete(data, data.shape[-1]//2, axis=1)
+            data = DataProcessing.__Pixelation(data, nPx)
+            data = np.insert(data, data.shape[1]//2, f[:, f.shape[1]//2], axis=1)
+            data = np.c_[np.repeat(np.average(f_left, axis=-1)[:, np.newaxis], f_left.shape[-1], axis=-1), data]
+            data = np.c_[data, np.repeat(np.average(f_right, axis=-1)[:, np.newaxis], f_right.shape[-1], axis=-1)]
+            return data
+
+        data = DataProcessing.__Pixelation(data, nPx)
+        data = np.c_[np.repeat(np.average(f_left, axis=-1)[:, np.newaxis], f_left.shape[-1], axis=-1), data]
+        data = np.c_[data, np.repeat(np.average(f_right, axis=-1)[:, np.newaxis], f_right.shape[-1], axis=-1)]
+        return data
+
+
+    @staticmethod
     def FourierTransform(input):
         x = DataProcessing.__FourierTransform_x(input[0])
         y = DataProcessing.__FourierTransform(input[1])
@@ -200,6 +229,40 @@ class DataProcessing:
     @staticmethod
     def __FourierTransform_x(input):
         return np.fft.fftshift(np.fft.fftfreq(len(input), (input[1]-input[0])))
+
+    @staticmethod
+    def __rect(x, px):
+        return np.where(np.abs(x) <= (px/2), 1, 0)
+
+    @staticmethod
+    def __findN(x, px):
+        return (np.abs(x) - px/2)//px + 0.5
+
+    @staticmethod
+    def __findNend(x, px):
+        return np.abs(x)/px
+
+    @staticmethod
+    def __Truncation(data, nPx, n, nEnd, direction='left'):
+
+        idx = int(np.round((nEnd - n) * nPx))
+
+        if direction == 'left':
+            temp = data[:, :idx]
+            data = data[:, idx:]
+            return temp, data
+        if direction == 'right':
+            temp = data[:, data.shape[-1] - idx:]
+            data = data[:, :data.shape[-1] - idx]
+            return temp, data
+        return
+
+    @staticmethod
+    def __Pixelation(data, nPx):
+        data = np.reshape(data, (data.shape[0], -1, nPx))
+        data = np.average(data, axis=-1)
+        return np.repeat(data, nPx, axis=-1)
+
 
 
 class MinorSymLogLocator(Locator):
