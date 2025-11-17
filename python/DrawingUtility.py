@@ -202,7 +202,7 @@ class DataProcessing:
         return Q
 
     @staticmethod
-    def SphericalRadiation_NegativeRefraction(S, d, g, alpha, N):
+    def SphericalRadiation_NegativeRefraction(S, d, g, alpha, N, g2):
         meshS, meshd = np.meshgrid(S, d)
         Q = meshS.copy()
         Q[:] = 0
@@ -216,8 +216,8 @@ class DataProcessing:
                 Q_Temp = (np.exp(-alpha*dt*k) * (1 - np.exp(-alpha*dt)) / (((meshd[i]+g) - k*dt)**2 + meshS[i]**2)) *\
                               ((meshd[i]+g) - k * dt) / (np.sqrt(((meshd[i]+g) - k*dt)**2 + meshS[i]**2))
 
-                Ltant = (j - 1/alpha + g) * meshS[i] / (meshd[i] - k*dt + g)
-                idx = DataProcessing.nearestIDX(Ltant, meshS[i])
+                Ltant = g2 * meshS[i] / (meshd[i] - k*dt + g)
+                idx = DataProcessing.nearestIDX(meshS[i] - Ltant, meshS[i])
                 Q[i] = Q[i] + np.bincount(idx, weights = Q_Temp, minlength=len(meshS[i]))
 
         return Q

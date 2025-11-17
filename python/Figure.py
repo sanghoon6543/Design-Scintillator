@@ -61,9 +61,10 @@ class DeviceModelling:
         for key in dataprocessaddress:
             self.DataProcessInfo[key] = UTIL.DataProcessing.GetEntry(dataprocessaddress[key])
 
-        SStep, dStep, N, gap, alpha, px = float(self.DataProcessInfo['xStep']), float(self.DataProcessInfo['yStep']), \
-                                          int(self.DataProcessInfo['N']), float(self.DataProcessInfo['Gap']), \
-                                          float(self.DataProcessInfo['abscoeff']), float(self.DataProcessInfo['a'])
+        SStep, dStep, N, gap, alpha, px, gap2 = float(self.DataProcessInfo['xStep']), float(self.DataProcessInfo['yStep']), \
+                                              int(self.DataProcessInfo['N']), float(self.DataProcessInfo['Gap']), \
+                                              float(self.DataProcessInfo['abscoeff']), float(self.DataProcessInfo['a']), \
+                                              float(self.DataProcessInfo['Gap2'])
 
         colorstyle = mpl.colormaps[inputinfo['CMapTitleLd_0']]
         vmin, vmax = float(inputinfo['CMap Range_0']), float(inputinfo['CMap Range_1'])
@@ -71,9 +72,10 @@ class DeviceModelling:
         S = UTIL.DataProcessing.um2cm(np.arange(ax.get_xlim()[0], ax.get_xlim()[1] + SStep, SStep))
         d = UTIL.DataProcessing.um2cm(np.arange(ax.get_ylim()[0], ax.get_ylim()[1] + dStep, dStep))
         g = UTIL.DataProcessing.um2cm(gap)
+        g2 = UTIL.DataProcessing.um2cm(gap2)
         px = UTIL.DataProcessing.um2cm(px)
 
-        data = UTIL.DataProcessing.SphericalRadiation_NegativeRefraction(S, d, g, alpha, N)
+        data = UTIL.DataProcessing.SphericalRadiation_NegativeRefraction(S, d, g, alpha, N, g2)
         # data = UTIL.DataProcessing.SphericalRadiation(S, d, g, alpha, N)
 
         data_pixelated = UTIL.DataProcessing.pixelation(S, data, px)
@@ -172,13 +174,13 @@ class DeviceModelling:
 
         ### Data Processing UI
         colspan = 0
-        LabelInfos = ["x Step", "y Step", 'N', "Gap [\u03BCm]", "\u03B1 [cm\u207b\u00B9]", "Pixel Pitch [\u03BCm]"]
+        LabelInfos = ["x Step", "y Step", 'N', "Gap [\u03BCm]", "\u03B1 [cm\u207b\u00B9]", "Pixel Pitch [\u03BCm]", "Gap 2 [\u03BCm]"]
 
         colspan += 1
         for n, t in enumerate(LabelInfos):
             UI.UI_tkinter.UI_Labels(self.DataProcessFrame, t=t, row=n)
 
-        EntryInfos = {'xStep': 1, 'yStep': 1, 'N': 1000, 'Gap': 20, 'abscoeff': 476, 'a': 200}
+        EntryInfos = {'xStep': 1, 'yStep': 1, 'N': 1000, 'Gap': 20, 'abscoeff': 476, 'a': 200, 'Gap2':20}
 
         self.DataProcessEntryAddress = {}
 
