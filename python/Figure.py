@@ -107,8 +107,9 @@ class DeviceModelling:
         for k, data_now in enumerate(data):
             fft_x, fft_data[k] = UTIL.DataProcessing.FourierTransform(np.array([x, data_now]))
         fft_data = np.abs(fft_data)
-        UTIL.DataProcessing.np2clipboard(data=fft_data, index=y, columns=fft_x)
+        fft_data = fft_data / np.max(fft_data, axis=-1)[:, np.newaxis]
 
+        UTIL.DataProcessing.np2clipboard(data=fft_data, index=y, columns=fft_x)
         colorstyle = mpl.colormaps[inputinfo['CMapTitleLd_0']]
 
         c = ax.imshow(np.abs(fft_data), cmap=colorstyle, alpha=0.8, origin='lower' ,
