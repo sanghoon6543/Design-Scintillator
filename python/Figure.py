@@ -61,8 +61,8 @@ class DeviceModelling:
         for key in dataprocessaddress:
             self.DataProcessInfo[key] = UTIL.DataProcessing.GetEntry(dataprocessaddress[key])
 
-        SStep, dStep, N, gap, alpha, px, gap2 = float(self.DataProcessInfo['xStep']), float(self.DataProcessInfo['yStep']), \
-                                              int(self.DataProcessInfo['N']), float(self.DataProcessInfo['Gap']), \
+        SStep, tStep, dt, gap, alpha, px, gap2 = float(self.DataProcessInfo['xStep']), float(self.DataProcessInfo['yStep']), \
+                                              float(self.DataProcessInfo['dt']), float(self.DataProcessInfo['Gap']), \
                                               float(self.DataProcessInfo['abscoeff']), float(self.DataProcessInfo['a']), \
                                               float(self.DataProcessInfo['Gap2'])
 
@@ -70,17 +70,18 @@ class DeviceModelling:
         vmin, vmax = float(inputinfo['CMap Range_0']), float(inputinfo['CMap Range_1'])
 
         S = UTIL.DataProcessing.um2cm(np.arange(ax.get_xlim()[0], ax.get_xlim()[1] + SStep, SStep))
-        d = UTIL.DataProcessing.um2cm(np.arange(ax.get_ylim()[0], ax.get_ylim()[1] + dStep, dStep))
+        t = UTIL.DataProcessing.um2cm(np.arange(ax.get_ylim()[0], ax.get_ylim()[1] + tStep, tStep))
+        dt = UTIL.DataProcessing.um2cm(dt)
         g = UTIL.DataProcessing.um2cm(gap)
         g2 = UTIL.DataProcessing.um2cm(gap2)
         px = UTIL.DataProcessing.um2cm(px)
 
-        data = UTIL.DataProcessing.SphericalRadiation_NegativeRefraction(S, d, g, alpha, N, g2)
-        # data = UTIL.DataProcessing.SphericalRadiation(S, d, g, alpha, N)
+        data = UTIL.DataProcessing.SphericalRadiation_NegativeRefraction(S, t, g, alpha, dt, g2)
+        # data = UTIL.DataProcessing.SphericalRadiation(S, d, g, alpha, dt)
 
         data_pixelated = UTIL.DataProcessing.pixelation(S, data, px)
 
-        UTIL.DataProcessing.np2clipboard(data=data_pixelated, index=d, columns=S)
+        UTIL.DataProcessing.np2clipboard(data=data_pixelated, index=t, columns=S)
 
         c = ax.imshow(data_pixelated, cmap=colorstyle, alpha=0.8, origin='lower' ,
                       extent = [ax.get_xlim()[0], ax.get_xlim()[1], ax.get_ylim()[0], ax.get_ylim()[1]],
@@ -139,7 +140,7 @@ class DeviceModelling:
 
         colspan += 3
 
-        EntryInfos = {'Title': 'Title', 'xAxisTitle': "Distance from Center, s [\u03BCm]", 'yAxisTitle': "Thickness, d [\u03BCm]",
+        EntryInfos = {'Title': 'Title', 'xAxisTitle': "Distance from Center, s [\u03BCm]", 'yAxisTitle': "Thickness, t [\u03BCm]",
                       'xLim': (0, 1), 'yLim': (0, 1), 'MajorTickXY': (1, 1), 'CMap Range': (0, 1), 'CMapTitleLd': ('RdBu_r', 'Intensity [a.u.]', True)}
 
         self.InputEntryAddress = {}
@@ -175,13 +176,13 @@ class DeviceModelling:
 
         ### Data Processing UI
         colspan = 0
-        LabelInfos = ["x Step", "y Step", 'N', "Gap [\u03BCm]", "\u03B1 [cm\u207b\u00B9]", "Pixel Pitch [\u03BCm]", "Gap 2 [\u03BCm]"]
+        LabelInfos = ["x Step", "y Step", '\u2202t [\u03BCm]', "Gap [\u03BCm]", "\u03B1 [cm\u207b\u00B9]", "Pixel Pitch [\u03BCm]", "Gap 2 [\u03BCm]"]
 
         colspan += 1
         for n, t in enumerate(LabelInfos):
             UI.UI_tkinter.UI_Labels(self.DataProcessFrame, t=t, row=n)
 
-        EntryInfos = {'xStep': 1, 'yStep': 1, 'N': 1000, 'Gap': 20, 'abscoeff': 476, 'a': 200, 'Gap2':20}
+        EntryInfos = {'xStep': 1, 'yStep': 1, 'dt': 0.1, 'Gap': 20, 'abscoeff': 476, 'a': 200, 'Gap2':20}
 
         self.DataProcessEntryAddress = {}
 

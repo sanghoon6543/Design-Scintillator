@@ -202,16 +202,17 @@ class DataProcessing:
         return Q
 
     @staticmethod
-    def SphericalRadiation_NegativeRefraction(S, d, g, alpha, N, g2):
+    def SphericalRadiation_NegativeRefraction(S, d, g, alpha, dt, g2):
         meshS, meshd = np.meshgrid(S, d)
         Q = meshS.copy()
         Q[:] = 0
-        dt = np.max(d)/N
 
         # for j in range(1, div+1):
         for i, j in enumerate(d): # Thickness Sweep
-            for k in range(1, N + 1): # Wave Propagation
-                if k*dt >= 1*j:
+            k = 0
+            while True: # Wave Propagation
+                k += 1
+                if k*dt >= j:
                     break
                 Q_Temp = (np.exp(-alpha*dt*k) * (1 - np.exp(-alpha*dt)) / (((meshd[i]+g) - k*dt)**2 + meshS[i]**2)) *\
                               ((meshd[i]+g) - k * dt) / (np.sqrt(((meshd[i]+g) - k*dt)**2 + meshS[i]**2))
